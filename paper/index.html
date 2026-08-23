@@ -69,7 +69,7 @@
 
             <section id="data">
                 <h2>Data</h2>
-                <p>We use the FlyRank ML Internship starter dataset (30,000 rows, one row per content item identified by content_id). The data spans content created between 2024-10-16 and 2026-07-06, with daily performance facts through 2026-06-30. We use the 80/20 time-aware split: training on content created earlier, validation on later-created content.</p>
+                <p>We use the FlyRank ML Internship starter dataset (30,000 rows, one row per content item identified by content_id). The data spans content created between 2024-10-16 and 2026-07-06, with daily performance facts through 2026-06-30. We use the 80/20 time-aware split based on content_age_days percentile: training on content_age_days <= 390 (24,132 rows), validation on content_age_days > 390 (5,868 rows).</p>
                 <p>Tables used: the starter CSV with columns content_id, client_id, impressions_90d, clicks_90d, ctr, avg_position, content_age_days, freshness_tier, position_tier, trend_direction. Excluded: trend_direction (label source), trend_pct (label source), is_declining_label (target/proxy).</p>
                 <p><strong>Unit of analysis:</strong> One content item (page) identified by content_id. <strong>Development month:</strong> March 2026 (mid-panel). <strong>Sealed test month:</strong> June 2026 (_sample), not used for development.</p>
             </section>
@@ -151,7 +151,7 @@
 
             <section id="recommendations">
                 <h2>Ranked Recommendations</h2>
-                <p>The ranking produces three action categories:</p>
+                <p>The ranking produces three action categories (ranked decision-support recommendations for human review):</p>
                 <ul>
                     <li><strong>REFRESH:</strong> Pages with strong evidence of decline, prioritized for human review.</li>
                     <li><strong>REVIEW:</strong> Pages where evidence exists but confidence is lower.</li>
@@ -162,7 +162,7 @@
 
             <section id="reproducibility">
                 <h2>Reproducibility</h2>
-                <p>Another student with FlyRank dataset access should be able to understand the full workflow. Notebook: work/notebooks/capstone.ipynb. Repository: <a href="https://github.com/Sardar-Mutahar/flyrank-ml-internship">https://github.com/Sardar-Mutahar/flyrank-ml-internship</a></p>
+                <p>Another student with FlyRank dataset access should be able to understand the full workflow. Notebook: <a href="work/notebooks/capstone.ipynb">work/notebooks/capstone.ipynb</a>. Repository: <a href="https://github.com/Sardar-Mutahar/flyrank-ml-internship">GitHub</a>. <a href="https://github.com/Sardar-Mutahar/flyrank-ml-internship">https://github.com/Sardar-Mutahar/flyrank-ml-internship</a></p>
             </section>
 
             <section id="acknowledgments">

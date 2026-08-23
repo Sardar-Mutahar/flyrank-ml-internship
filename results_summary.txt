@@ -1,0 +1,9 @@
+Baseline AP: 0.3847
+Baseline Precision@50: 0.5000
+Model AP: 0.3735
+Model Precision@50: 0.2600
+Model beats baseline AP: NO
+Model beats baseline Precision@50: NO
+Age threshold: 390.0
+Train rows: 24132
+Test rows: 5868

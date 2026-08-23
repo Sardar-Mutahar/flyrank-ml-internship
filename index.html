@@ -58,7 +58,7 @@
 
             <section id="abstract">
                 <h2>Abstract</h2>
-                <p>This paper investigates whether a leakage-safe ranking model can prioritize content pages for refresh better than a transparent freshness + position baseline. Using the FlyRank ML Internship dataset of 30,000 content items, we train a logistic regression model on five historical search signals to rank pages by declining visibility. Both the baseline and model are evaluated on the same time-aware validation split. The model achieves an Average Precision of X.XXX but does not outperform the Week 4 baseline Precision@50 of X.XXX. These results demonstrate that even simple, leakage-safe baselines are difficult to surpass, and that the proxy label (is_declining_label = trend_direction == "down") is only a limited signal for refresh intervention. We provide ranked recommendations with reason codes for content reviewers, along with honest discussion of the proxy-label limitation and observational nature of the data.</p>
+                <p>This paper investigates whether a leakage-safe ranking model can prioritize content pages for refresh better than a transparent freshness + position baseline. Using the FlyRank ML Internship dataset of 30,000 content items, we train a logistic regression model on five historical search signals (impressions, clicks, CTR, average position, and content age) to rank pages by declining visibility. We evaluate both the baseline and model on the same time-aware validation split, ensuring honest comparison. The model achieves an Average Precision of 0.3735 and Precision@50 of 0.2600, underperforms the Week 4 baseline Precision@50 of 0.5000. These results demonstrate that even simple, leakage-safe baselines are difficult to surpass, and that the proxy label (is_declining_label = trend_direction == "down") is only a limited signal for refresh intervention. We provide ranked recommendations with reason codes for content reviewers, along with honest discussion of the proxy-label limitation and observational nature of the data.</p>
             </section>
 
             <section id="introduction">
@@ -69,7 +69,7 @@
 
             <section id="data">
                 <h2>Data</h2>
-                <p>We use the FlyRank ML Internmission starter dataset (30,000 rows, one row per content item identified by content_id). The data spans content created between 2024-10-16 and 2026-07-06, with daily performance facts through 2026-06-30. We use the 80/20 time-aware split: training on content created earlier, validation on later-created content.</p>
+                <p>We use the FlyRank ML Internship starter dataset (30,000 rows, one row per content item identified by content_id). The data spans content created between 2024-10-16 and 2026-07-06, with daily performance facts through 2026-06-30. We use the 80/20 time-aware split based on content_age_days percentile: training on content_age_days <= 390 (24,132 rows), validation on content_age_days > 390 (5,868 rows).</p>
                 <p>Tables used: the starter CSV with columns content_id, client_id, impressions_90d, clicks_90d, ctr, avg_position, content_age_days, freshness_tier, position_tier, trend_direction. Excluded: trend_direction (label source), trend_pct (label source), is_declining_label (target/proxy).</p>
                 <p><strong>Unit of analysis:</strong> One content item (page) identified by content_id. <strong>Development month:</strong> March 2026 (mid-panel). <strong>Sealed test month:</strong> June 2026 (_sample), not used for development.</p>
             </section>
@@ -110,26 +110,26 @@
                         <tr><th>Method</th><th>Average Precision</th><th>Precision@50</th></tr>
                     </thead>
                     <tbody>
-                        <tr><td>Week 4 baseline</td><td>X.XXX</td><td>X.XXX</td></tr>
-                        <tr><td>ML model (logistic regression)</td><td>X.XXX</td><td>X.XXX</td></tr>
+                        <tr><td>Week 4 baseline</td><td>0.3847</td><td>0.5000</td></tr>
+                        <tr><td>Logistic Regression model</td><td>0.3735</td><td>0.2600</td></tr>
                     </tbody>
                 </table>
 
-                <p>The model did not outperform the simple baseline on this validation period. This honest result is acceptable and explains that the simple rule-based baseline, which uses only two transparent signals (freshness and position), is difficult to surpass with leakage-safe features alone.</p>
+                <p>The logistic regression model underperformed the Week 4 baseline on this validation period.</p>
 
                 <h3>Model Interpretation</h3>
                 <p>The logistic regression coefficients (absolute value) are:</p>
                 <table>
                     <thead><tr><th>Feature</th><th>Coefficient</th></tr></thead>
                     <tbody>
-                        <tr><td>impressions_90d</td><td>X.XXX</td></tr>
-                        <tr><td>clicks_90d</td><td>X.XXX</td></tr>
-                        <tr><td>ctr</td><td>X.XXX</td></tr>
-                        <tr><td>avg_position</td><td>X.XXX</td></tr>
-                        <tr><td>content_age_days</td><td>X.XXX</td></tr>
+                        <tr><td>content_age_days</td><td>-0.2597</td></tr>
+                        <tr><td>ctr</td><td>-0.2058</td></tr>
+                        <tr><td>clicks_90d</td><td>-0.1600</td></tr>
+                        <tr><td>avg_position</td><td>0.0789</td></tr>
+                        <tr><td>impressions_90d</td><td>0.0365</td></tr>
                     </tbody>
                 </table>
-                <p>Say: "The model relied more heavily on impressions_90d." NOT: "impressions_90d causes ranking changes."</p>
+                <p>Say: "The model relied more heavily on content age and CTR." NOT: "content age or CTR causes ranking changes."</p>
 
                 <div class="chart" id="chart1"></div>
                 <div class="chart" id="chart2"></div>
@@ -151,7 +151,7 @@
 
             <section id="recommendations">
                 <h2>Ranked Recommendations</h2>
-                <p>The ranking produces three action categories:</p>
+                <p>The ranking produces three action categories (ranked decision-support recommendations for human review):</p>
                 <ul>
                     <li><strong>REFRESH:</strong> Pages with strong evidence of decline, prioritized for human review.</li>
                     <li><strong>REVIEW:</strong> Pages where evidence exists but confidence is lower.</li>
@@ -162,7 +162,7 @@
 
             <section id="reproducibility">
                 <h2>Reproducibility</h2>
-                <p>Another student with FlyRank dataset access should be able to understand the full workflow. Notebook: work/notebooks/capstone.ipynb. Repository: <a href="https://github.com/Sardar-Mutahar/flyrank-ml-internship">https://github.com/Sardar-Mutahar/flyrank-ml-internship</a></p>
+                <p>Another student with FlyRank dataset access should be able to understand the full workflow. Notebook: <a href="work/notebooks/capstone.ipynb">work/notebooks/capstone.ipynb</a>. Repository: <a href="https://github.com/Sardar-Mutahar/flyrank-ml-internship">GitHub</a>. <a href="https://github.com/Sardar-Mutahar/flyrank-ml-internship">https://github.com/Sardar-Mutahar/flyrank-ml-internship</a></p>
             </section>
 
             <section id="acknowledgments">

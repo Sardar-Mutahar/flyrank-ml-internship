@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking Search Pages for Refresh: A Leakage-Safe Content Opportunity Study</title>
+    <style>
+        :root {
+            --brand-dark: #16232A;
+            --brand-text: #27343B;
+            --brand-muted: #65737A;
+            --brand-purple: #6F4E7C;
+            --brand-teal: #426B69;
+            --brand-blue: #4E79A7;
+            --brand-lavender: #8C6BB1;
+            --brand-green: #59A14F;
+            --brand-orange: #F28E2B;
+            --brand-red: #E15759;
+            --light-bg: #F6F4F7;
+            --line: #D9DEE2;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { font-size: 16px; }
+        body {
+            font-family: system, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--brand-text);
+            background: #fff;
+        }
+        a { color: var(--brand-purple); text-decoration: none; }
+        a:hover { text-decoration: underline; }
+
+        .max-width { max-width: 800px; margin: 0 auto; padding: 0 1rem; }
+        h1 { font-size: 1.8rem; font-weight: 600; margin-bottom: 1rem; }
+        h2 { font-size: 1.3rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.5rem; }
+        h3 { font-size: 1.1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.3rem; }
+        p { margin-bottom: 1rem; }
+        .lead { font-size: 1.2rem; color: var(--brand-muted); margin-bottom: 2rem; }
+        table { width: 100%; border-collapse: collapse; margin: 1.5rem 0; }
+        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid var(--line); }
+        th { background: #f8f8f8; font-weight: 600; }
+        tr:nth-child(even) { background: #fafafa; }
+        .chart { min-height: 200px; background: #f8f8f8; margin: 1rem 0; }
+        .meta { color: var(--brand-muted); font-size: 0.9rem; margin: 2rem 0; padding: 1rem; background: #f8f8f8; border-radius: 4px; }
+        nav { margin: 2rem 0; }
+        nav a { margin-right: 1.5rem; }
+        .badge { display: inline-block; padding: 0.2rem 0.5rem; background: var(--light-bg); border-radius: 3px; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <div class="max-width">
+        <article>
+            <header>
+                <h1>Ranking Search Pages for Refresh: A Leakage-Safe Content Opportunity Study</h1>
+                <p class="lead">FlyRank AI Internship — Capstone Research Paper</p>
+            </header>
+
+            <section id="abstract">
+                <h2>Abstract</h2>
+                <p>This paper investigates whether a leakage-safe ranking model can prioritize content pages for refresh better than a transparent freshness + position baseline. Using the FlyRank ML Internship dataset of 30,000 content items, we train a logistic regression model on five historical search signals (impressions, clicks, CTR, average position, and content age) to rank pages by declining visibility. We evaluate both the baseline and model on the same time-aware validation split, ensuring honest comparison. The model achieves an Average Precision of X.XXX and Precision@50 of X.XX, {model_vs_baseline} the Week 4 baseline Precision@50 of X.XX. These results demonstrate that even simple, leakage-safe baselines are difficult to surpass, and that the proxy label (is_declining_label = trend_direction == "down") is only a limited signal for refresh intervention. We provide ranked recommendations with reason codes for content reviewers, along with honest discussion of the proxy-label limitation and observational nature of the data.</p>
+            </section>
+
+            <section id="introduction">
+                <h2>Introduction / Problem Statement</h2>
+                <p>Content reviewers have limited capacity and need a prioritized ranking of pages to review for possible refresh. Reviewing every page is inefficient, and wrong recommendations waste reviewer time on pages that may not need intervention, or miss declining pages that could benefit from refresh. This project asks: can a machine learning model improve prioritization over the simple Week 4 rule that combines freshness tier and position tier?</p>
+                <p>The cost of a false positive (recommending a page that doesn't need refresh) is wasted reviewer hours. The cost of a false negative (missing a declining page) is a lost refresh opportunity. We do not claim that either action guarantees traffic recovery; the data shows observational associations, not causal effects.</p>
+            </section>
+
+            <section id="data">
+                <h2>Data</h2>
+                <p>We use the FlyRank ML Internship starter dataset (30,000 rows, one row per content item identified by content_id). The data spans content created between 2024-10-16 and 2026-07-06, with daily performance facts through 2026-06-30. We use the 80/20 time-aware split: training on content created earlier, validation on later-created content.</p>
+                <p>Tables used: the starter CSV with columns content_id, client_id, impressions_90d, clicks_90d, ctr, avg_position, content_age_days, freshness_tier, position_tier, trend_direction. Excluded: trend_direction (label source), trend_pct (label source), is_declining_label (target/proxy).</p>
+                <p><strong>Unit of analysis:</strong> One content item (page) identified by content_id. <strong>Development month:</strong> March 2026 (mid-panel). <strong>Sealed test month:</strong> June 2026 (_sample), not used for development.</p>
+            </section>
+
+            <section id="methodology">
+                <h2>Methodology</h2>
+
+                <h3>Target / Proxy</h3>
+                <p>is_declining_label = trend_direction == "down". This is a provisional proxy for refresh opportunity, not a ground-truth label.</p>
+
+                <h3>Features (leakage-safe)</h3>
+                <ol>
+                    <li><strong>impressions_90d:</strong> Total GSC search impressions in the 90-day window. Summarizes historical search exposure from the prior quarter.</li>
+                    <li><strong>clicks_90d:</strong> Total GSC clicks in the 90-day window. Summarizes historical click volume from the prior quarter.</li>
+                    <li><strong>ctr:</strong> Click-through rate = clicks_90d / impressions_90d × 100, stored as percent. Computed from impression and click counts that precede the prediction moment.</li>
+                    <li><strong>avg_position:</strong> Mean GSC average position over the 90-day window. Lower is better. 0 means no position data. Historical signal from prior weeks.</li>
+                    <li><strong>content_age_days:</strong> Days since content was created. Known before any refresh decision.</li>
+                </ol>
+
+                <p>All features pass the "available at prediction time" test. No label-derived fields are included.</p>
+
+                <h3>Baseline</h3>
+                <p>The Week 4 baseline uses freshness_tier and position_tier: baseline_score = freshness_tier_score + position_tier_score (range 0–7). Both baseline and model are evaluated on the exact same validation rows.</p>
+
+                <h3>Model</h3>
+                <p>Logistic regression with L2 regularization, class weighting balanced, random_state=42. Five leakage-safe features only. No trend_direction, trend_pct, or is_declining_label as features.</p>
+
+                <h3>Validation</h3>
+                <p>Time-aware split: 80% training (earlier content), 20% testing (later content). Both baseline and model evaluated on the same test rows. Metrics: Average Precision (AP) and Precision@50.</p>
+            </section>
+
+            <section id="results">
+                <h2>Results</h2>
+
+                <h3>Comparison Table</h3>
+                <table>
+                    <thead>
+                        <tr><th>Method</th><th>Average Precision</th><th>Precision@50</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Week 4 baseline</td><td>X.XXX</td><td>X.XX</td></tr>
+                        <tr><td>Logistic Regression model</td><td>X.XXX</td><td>X.XX</td></tr>
+                    </tbody>
+                </table>
+
+                <p>{model_vs_baseline}</p>
+
+                <h3>Model Interpretation</h3>
+                <p>The logistic regression coefficients (absolute value) are:</p>
+                <table>
+                    <thead><tr><th>Feature</th><th>Coefficient</th></tr></thead>
+                    <tbody>
+                        <tr><td>impressions_90d</td><td>X.XXX</td></tr>
+                        <tr><td>clicks_90d</td><td>X.XXX</td></tr>
+                        <tr><td>ctr</td><td>X.XXX</td></tr>
+                        <tr><td>avg_position</td><td>X.XXX</td></tr>
+                        <tr><td>content_age_days</td><td>X.XXX</td></tr>
+                    </tbody>
+                </table>
+                <p>Say: "The model relied more heavily on {top_feature}." NOT: "{top_feature} causes ranking changes."</p>
+
+                <div class="chart" id="chart1"></div>
+                <div class="chart" id="chart2"></div>
+                <div class="chart" id="chart3"></div>
+            </section>
+
+            <section id="limitations">
+                <h2>Limitations & Honest Framing</h2>
+                <ul>
+                    <li><strong>Proxy-label limitation:</strong> is_declining_label = trend_direction == "down" is NOT a ground-truth refresh label.</li>
+                    <li><strong>Observational data:</strong> No causal inference possible.</li>
+                    <li><strong>No causal claims:</strong> Use careful language: "associated with," "suggests," "may," "decision-support." Avoid: "causes," "guarantees," "proves."</li>
+                    <li><strong>Seasonality and changing search behavior.</li>
+                    <li><strong>False positives and false negatives.</li>
+                    <li><strong>Validation limitations: single dataset, single time period.</li>
+                    <li><strong>Baseline limitations: only two signals (freshness + position).</li>
+                </ul>
+            </section>
+
+            <section id="recommendations">
+                <h2>Ranked Recommendations</h2>
+                <p>The ranking produces three action categories:</p>
+                <ul>
+                    <li><strong>REFRESH:</strong> Pages with strong evidence of decline, prioritized for human review.</li>
+                    <li><strong>REVIEW:</strong> Pages where evidence exists but confidence is lower.</li>
+                    <li><strong>MONITOR:</strong> Pages where intervention is not clearly justified.</li>
+                </ul>
+                <p>Reason codes based on actual feature combinations: stale + lower position, high impressions with low CTR, low engagement, general refresh review.</p>
+            </section>
+
+            <section id="reproducibility">
+                <h2>Reproducibility</h2>
+                <p>Another student with FlyRank dataset access should be able to understand the full workflow. Notebook: work/notebooks/capstone.ipynb. Repository: <a href="https://github.com/Sardar-Mutahar/flyrank-ml-internship">https://github.com/Sardar-Mutahar/flyrank-ml-internship</a></p>
+            </section>
+
+            <section id="acknowledgments">
+                <h2>Acknowledgments & Data Credit</h2>
+                <p>Built on the FlyRank ML Internship dataset. Link: <a href="https://flyrank.ai">https://flyrank.ai</a>. Do not imply FlyRank endorsed this project.</p>
+            </section>
+
+        </article>
+    </div>
+</body>
+</html>
